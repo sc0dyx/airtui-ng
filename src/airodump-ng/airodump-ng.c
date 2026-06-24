@@ -134,153 +134,6 @@ int is_filtered_essid(const uint8_t * essid);
 
 /* bunch of global stuff */
 struct communication_options opt;
-static struct local_options
-{
-	struct AP_info *ap_1st, *ap_end;
-	struct ST_info *st_1st, *st_end;
-	struct NA_info * na_1st;
-	struct oui * manufList;
-
-	pMAC_t rBSSID;
-	unsigned char prev_bssid[6];
-	char ** f_essid;
-	int f_essid_count;
-#ifdef HAVE_PCRE2
-	pcre2_code * f_essid_regex;
-	pcre2_match_data * f_essid_match_data;
-#elif defined HAVE_PCRE
-	pcre * f_essid_regex;
-#endif
-	char * dump_prefix;
-	char * keyout;
-
-	char * batt; /* Battery string       */
-	int channel[MAX_CARDS]; /* current channel #    */
-	int frequency[MAX_CARDS]; /* current frequency #    */
-	int ch_pipe[2]; /* current channel pipe */
-	int cd_pipe[2]; /* current card pipe    */
-	int gc_pipe[2]; /* gps coordinates pipe */
-	float gps_loc[8]; /* gps coordinates      */
-	int save_gps; /* keep gps file flag   */
-	int gps_valid_interval; /* how many seconds until we consider the GPS data invalid if we dont get new data */
-
-	int * channels;
-	int singlechan; /* channel hopping set 1*/
-	int singlefreq; /* frequency hopping: 1 */
-	int chswitch; /* switching method     */
-	unsigned int f_encrypt; /* encryption filter    */
-	int update_s; /* update delay in sec  */
-
-	volatile int do_exit; /* interrupt flag       */
-	struct winsize ws; /* console window size  */
-
-	char * elapsed_time; /* capture time			*/
-
-	int one_beacon; /* Record only 1 beacon?*/
-
-	int * own_channels; /* custom channel list  */
-	int * own_frequencies; /* custom frequency list  */
-
-	int asso_station; /* only show associated stations */
-	int unasso_station; /* only show unassociated stations */
-
-	unsigned char wpa_bssid[6]; /* the wpa handshake bssid   */
-	char message[512];
-	char decloak;
-
-	char is_berlin; /* is the switch --berlin set? */
-	int numaps; /* number of APs on the current list */
-	int maxnumaps; /* maximum numbers of APs on the list */
-	int maxaps; /* number of all APs found */
-	int berlin; /* number of seconds it takes in berlin to fill the whole screen
-				   with APs*/
-	/*
-	 * The name for this option may look quite strange, here is the story behind
-	 * it:
-	 * During the CCC2007, 10 august 2007, we (hirte, Mister_X) went to visit
-	 * Berlin
-	 * and couldn't resist to turn on airodump-ng to see how much access point
-	 * we can
-	 * get during the trip from Finowfurt to Berlin. When we were in Berlin, the
-	 * number
-	 * of AP increase really fast, so fast that it couldn't fit in a screen,
-	 * even rotated;
-	 * the list was really huge (we have a picture of that). The 2 minutes
-	 * timeout
-	 * (if the last packet seen is higher than 2 minutes, the AP isn't shown
-	 * anymore)
-	 * wasn't enough, so we decided to create a new option to change that
-	 * timeout.
-	 * We implemented this option in the highest tower (TV Tower) of Berlin,
-	 * eating an ice.
-	 */
-
-	int show_ap;
-	int show_sta;
-	int show_ack;
-	int hide_known;
-
-	int hopfreq;
-
-	char * s_iface; /* source interface to read from */
-	FILE * f_cap_in;
-	struct pcap_file_header pfh_in;
-	int detect_anomaly; /* Detect WIPS protecting WEP in action */
-
-	char * freqstring;
-	int freqoption;
-	int chanoption;
-	int ignore_other_channels;
-	int active_scan_sim; /* simulates an active scan, sending probe requests */
-
-	/* Airodump-ng start time: for kismet netxml file */
-	char * airodump_start_time;
-
-	pthread_t input_tid;
-	pthread_t gps_tid;
-	int sort_by;
-	int sort_inv;
-	int start_print_ap;
-	int start_print_sta;
-	struct AP_info * p_selected_ap;
-	enum
-	{
-		selection_direction_down,
-		selection_direction_up,
-		selection_direction_no
-	} en_selection_direction;
-	int mark_cur_ap;
-	int num_cards;
-	int do_pause;
-	int do_sort_always;
-
-	pthread_mutex_t mx_print; /* lock write access to ap LL   */
-	pthread_mutex_t mx_sort; /* lock write access to ap LL   */
-
-	unsigned char selected_bssid[6]; /* bssid that is selected */
-
-	u_int maxsize_essid_seen;
-	int show_manufacturer;
-	int show_uptime;
-	int file_write_interval;
-	u_int maxsize_wps_seen;
-	int show_wps;
-	struct tm gps_time; /* the timestamp from the gps data */
-#ifdef CONFIG_LIBNL
-	unsigned int htval;
-#endif
-	int background_mode;
-
-	unsigned long min_pkts;
-	int16_t min_power;
-	int8_t min_rxq;
-
-	int relative_time; /* read PCAP in psuedo-real-time */
-
-	int color_on;
-	int color;
-} lopt;
-
 static void resetSelection(void)
 {
 	lopt.sort_by = SORT_BY_NOTHING;
@@ -2149,20 +2002,19 @@ skip_probe:
 					for (amount_ss = 0;
 						 amount_ss < MAX_AC_MCS_INDEX
 						 && ap_cur->ac_channel.mcs_index[amount_ss] != 0;
-						 ++amount_ss)
-						;
+						 ++amount_ss);
 				}
 
 				// Get rate
 				float max_rate
 					= (ap_cur->standard[0] == 'n')
 						  ? get_80211n_rate(
-							  width, sgi, ap_cur->n_channel.mcs_index)
+								width, sgi, ap_cur->n_channel.mcs_index)
 						  : get_80211ac_rate(
-							  width,
-							  sgi,
-							  ap_cur->ac_channel.mcs_index[amount_ss - 1],
-							  amount_ss);
+								width,
+								sgi,
+								ap_cur->ac_channel.mcs_index[amount_ss - 1],
+								amount_ss);
 
 				// If no error, update rate
 				if (max_rate > 0)
@@ -5275,6 +5127,14 @@ channel_hopper(struct wif * wi[], int if_num, int chan_count, pid_t parent)
 	exit(0);
 }
 
+void channel_hopper_wrapper(struct wif * wi[],
+							int if_num,
+							int chan_count,
+							pid_t parent)
+{
+	channel_hopper(wi, if_num, chan_count, parent);
+}
+
 static void
 frequency_hopper(struct wif * wi[], int if_num, int chan_count, pid_t parent)
 {
@@ -5932,7 +5792,20 @@ static int rearrange_frequencies(void)
 
 	return (0);
 }
+int dump_add_packet_wrapper(unsigned char * h80211,
+							int caplen,
+							struct rx_info * ri,
+							int cardnum)
+{
+	return dump_add_packet(h80211, caplen, ri, cardnum);
+}
+void update_rx_quality_wrapper(void) { update_rx_quality(); }
 
+int update_dataps_wrapper(void) { return update_dataps(); }
+
+#ifndef AIRODUMP_NG_AS_LIB
+
+/* ifndef AIRODUMP_NG_AS_LIB */
 int main(int argc, char * argv[])
 {
 	long time_slept, cycle_time, cycle_time2;
@@ -6159,8 +6032,7 @@ int main(int argc, char * argv[])
 
 	/* check the arguments */
 
-	for (i = 0; long_options[i].name != NULL; i++)
-		;
+	for (i = 0; long_options[i].name != NULL; i++);
 	num_opts = i;
 
 	for (i = 0; i < argc; i++) // go through all arguments
@@ -6191,7 +6063,8 @@ int main(int argc, char * argv[])
 						else
 						{
 							// forgot second dash?
-							printf("Notice: You specified \"%s\". Did you mean "
+							printf("Notice: You specified \"%s\". Did you "
+								   "mean "
 								   "\"-%s\" instead?\n",
 								   argv[i],
 								   argv[i]);
@@ -7449,7 +7322,8 @@ int main(int argc, char * argv[])
 		{
 			for (i = 0; i < lopt.num_cards; i++)
 			{
-				if (FD_ISSET(fd_raw[i], &rfds)) // NOLINT(hicpp-signed-bitwise)
+				if (FD_ISSET(fd_raw[i],
+							 &rfds)) // NOLINT(hicpp-signed-bitwise)
 				{
 
 					memset(buffer, 0, sizeof(buffer));
@@ -7645,4 +7519,232 @@ int main(int argc, char * argv[])
 	show_cursor();
 
 	return (EXIT_SUCCESS);
+}
+
+#endif
+
+int airodump_init()
+{
+	long time_slept, cycle_time, cycle_time2;
+	char * output_format_string;
+	int caplen = 0, i, j, fdh, chan_count, freq_count;
+	int fd_raw[MAX_CARDS];
+	int ivs_only, found;
+	int freq[2];
+	int num_opts = 0;
+	int option = 0;
+	int option_index = 0;
+	char ifnam[64];
+	int wi_read_failed = 0;
+	int n = 0;
+	int output_format_first_time = 1;
+	unsigned char mac[6];
+#ifdef HAVE_PCRE2
+	int pcreerror;
+	PCRE2_UCHAR pcreerrorbuf[256];
+	PCRE2_SIZE pcreerroffset;
+#elif defined HAVE_PCRE
+	const char * pcreerror;
+	int pcreerroffset;
+#endif
+
+	struct AP_info *ap_cur, *ap_next;
+	struct ST_info *st_cur, *st_next;
+	struct NA_info *na_cur, *na_next;
+	struct oui *oui_cur, *oui_next;
+
+	struct pcap_pkthdr pkh;
+
+	time_t tt1, tt2, start_time;
+
+	struct wif * wi[MAX_CARDS];
+	struct rx_info ri;
+	unsigned char tmpbuf[4096];
+	unsigned char buffer[4096];
+	unsigned char * h80211;
+	char * iface[MAX_CARDS];
+
+	struct timeval tv0;
+	struct timeval tv1;
+	struct timeval tv2;
+	struct timeval tv3;
+	struct timeval tv4;
+	struct tm * lt;
+
+	/*
+	struct sockaddr_in provis_addr;
+	*/
+
+	fd_set rfds;
+	static const struct option long_options[]
+		= {{"ht20", 0, 0, '2'},
+		   {"ht40-", 0, 0, '3'},
+		   {"ht40+", 0, 0, '5'},
+		   {"band", 1, 0, 'b'},
+		   {"beacon", 0, 0, 'e'},
+		   {"beacons", 0, 0, 'e'},
+		   {"cswitch", 1, 0, 's'},
+		   {"netmask", 1, 0, 'm'},
+		   {"bssid", 1, 0, 'd'},
+		   {"essid", 1, 0, 'N'},
+		   {"essid-regex", 1, 0, 'R'},
+		   {"channel", 1, 0, 'c'},
+		   {"ignore-other-chans", 0, 0, 'O'},
+		   {"gpsd", 0, 0, 'g'},
+		   {"ivs", 0, 0, 'i'},
+		   {"write", 1, 0, 'w'},
+		   {"encrypt", 1, 0, 't'},
+		   {"update", 1, 0, 'u'},
+		   {"berlin", 1, 0, 'B'},
+		   {"help", 0, 0, 'H'},
+		   {"nodecloak", 0, 0, 'D'},
+		   {"showack", 0, 0, 'A'},
+		   {"detect-anomaly", 0, 0, 'E'},
+		   {"output-format", 1, 0, 'o'},
+		   {"ignore-negative-one", 0, &opt.ignore_negative_one, 1},
+		   {"manufacturer", 0, 0, 'M'},
+		   {"uptime", 0, 0, 'U'},
+		   {"write-interval", 1, 0, 'I'},
+		   {"wps", 0, 0, 'W'},
+		   {"background", 1, 0, 'K'},
+		   {"min-packets", 1, 0, 'n'},
+		   {"min-power", 1, 0, 'p'},
+		   {"min-rxq", 1, 0, 'q'},
+		   {"real-time", 0, 0, 'T'},
+		   {0, 0, 0, 0}};
+
+	pid_t main_pid = getpid();
+
+	console_utf8_enable();
+	ac_crypto_init();
+
+	ALLEGE(pthread_mutex_init(&(lopt.mx_print), NULL) == 0);
+	ALLEGE(pthread_mutex_init(&(lopt.mx_sort), NULL) == 0);
+
+	textstyle(TEXT_RESET); //(TEXT_RESET, TEXT_BLACK, TEXT_WHITE);
+
+	/* initialize a bunch of variables */
+
+	rand_init();
+	memset(&opt, 0, sizeof(opt));
+	memset(&lopt, 0, sizeof(lopt));
+
+	h80211 = NULL;
+	ivs_only = 0;
+	lopt.chanoption = 0;
+	lopt.ignore_other_channels = 0;
+	lopt.freqoption = 0;
+	lopt.num_cards = 0;
+	fdh = 0;
+	time_slept = 0;
+	lopt.batt = NULL;
+	lopt.chswitch = 0;
+	opt.usegpsd = 0;
+	lopt.channels = (int *) bg_chans;
+	lopt.one_beacon = 1;
+	lopt.singlechan = 0;
+	lopt.singlefreq = 0;
+	lopt.dump_prefix = NULL;
+	opt.record_data = 0;
+	opt.f_cap = NULL;
+	opt.f_ivs = NULL;
+	opt.f_txt = NULL;
+	opt.f_kis = NULL;
+	opt.f_kis_xml = NULL;
+	opt.f_gps = NULL;
+	opt.f_logcsv = NULL;
+	lopt.keyout = NULL;
+	opt.f_xor = NULL;
+	opt.sk_len = 0;
+	opt.sk_len2 = 0;
+	opt.sk_start = 0;
+	opt.prefix = NULL;
+	lopt.f_encrypt = 0;
+	lopt.asso_station = 0;
+	lopt.unasso_station = 0;
+	lopt.f_essid = NULL;
+	lopt.f_essid_count = 0;
+	lopt.active_scan_sim = 0;
+	lopt.update_s = 0;
+	lopt.decloak = 1;
+	lopt.is_berlin = 0;
+	lopt.numaps = 0;
+	lopt.maxnumaps = 0;
+	lopt.berlin = 120;
+	lopt.show_ap = 1;
+	lopt.show_sta = 1;
+	lopt.show_ack = 0;
+	lopt.hide_known = 0;
+	lopt.maxsize_essid_seen = 5; // Initial value: length of "ESSID"
+	lopt.show_manufacturer = 0;
+	lopt.show_uptime = 0;
+	lopt.hopfreq = DEFAULT_HOPFREQ;
+	opt.s_file = NULL;
+	lopt.s_iface = NULL;
+	lopt.f_cap_in = NULL;
+	lopt.detect_anomaly = 0;
+	lopt.airodump_start_time = NULL;
+	lopt.manufList = NULL;
+
+	opt.output_format_pcap = 1;
+	opt.output_format_csv = 1;
+	opt.output_format_kismet_csv = 1;
+	opt.output_format_kismet_netxml = 1;
+	opt.output_format_log_csv = 1;
+	lopt.gps_valid_interval
+		= 5; // If we dont get a new GPS update in 5 seconds - invalidate it
+	lopt.file_write_interval = 5; // Write file every 5 seconds by default
+	lopt.maxsize_wps_seen = 6;
+	lopt.show_wps = 0;
+	lopt.background_mode = -1;
+	lopt.do_exit = 0;
+	lopt.min_pkts = 2;
+	lopt.min_power = -120;
+	lopt.min_rxq = -1;
+	lopt.relative_time = 0;
+	lopt.color_on = 0;
+	lopt.color = TEXT_GREEN;
+#ifdef CONFIG_LIBNL
+	lopt.htval = CHANNEL_NO_HT;
+#endif
+#if defined HAVE_PCRE2 || defined HAVE_PCRE
+	lopt.f_essid_regex = NULL;
+#endif
+
+	// Default selection.
+	resetSelection();
+
+	memset(opt.sharedkey, '\x00', sizeof(opt.sharedkey));
+	memset(lopt.message, '\x00', sizeof(lopt.message));
+	memset(&lopt.pfh_in, '\x00', sizeof(struct pcap_file_header));
+
+	gettimeofday(&tv0, NULL);
+
+	lt = localtime(&tv0.tv_sec);
+
+	lopt.keyout = (char *) malloc(512);
+	ALLEGE(lopt.keyout != NULL);
+	memset(lopt.keyout, 0, 512);
+	snprintf(lopt.keyout,
+			 511,
+			 "keyout-%02d%02d-%02d%02d%02d.keys",
+			 lt->tm_mon + 1,
+			 lt->tm_mday,
+			 lt->tm_hour,
+			 lt->tm_min,
+			 lt->tm_sec);
+
+	for (i = 0; i < MAX_CARDS; i++)
+	{
+		fd_raw[i] = -1;
+		lopt.channel[i] = 0;
+	}
+
+	lopt.rBSSID = (pMAC_t) malloc(sizeof(struct MAC_list));
+	ALLEGE(lopt.rBSSID != NULL);
+	memset(lopt.rBSSID, 0, sizeof(struct MAC_list));
+	memset(opt.f_netmask, '\x00', 6);
+	memset(lopt.wpa_bssid, '\x00', 6);
+
+	return 0;
 }
