@@ -63,6 +63,7 @@ SRC_WC			= %D%/wpaclean/wpaclean.c
 SRC_AV			= %D%/airventriloquist-ng/airventriloquist-ng.c
 SRC_SESSION	= %D%/aircrack-ng/session.c
 SRC_DWRITE	= %D%/airodump-ng/dump_write.c
+SRC_ATUI = %D%/airtui-ng/airtui-ng.cpp
 
 bin_PROGRAMS += aircrack-ng \
                 airdecap-ng \
@@ -84,7 +85,8 @@ sbin_PROGRAMS += airbase-ng \
                  aireplay-ng \
                  airodump-ng \
                  airserv-ng \
-                 airtun-ng
+                 airtun-ng \
+								 airtui-ng
 
 if HAVE_SQLITE3
 bin_PROGRAMS += airolib-ng
@@ -200,6 +202,23 @@ airventriloquist_ng_CFLAGS		= $(COMMON_CFLAGS) $(LIBNL_CFLAGS)
 airventriloquist_ng_CPPFLAGS	= $(AM_CPPFLAGS) -I$(abs_srcdir)/src/airventriloquist-ng
 airventriloquist_ng_LDADD 		= $(COMMON_LDADD) $(LIBAIRCRACK_OSDEP_LIBS) $(LIBACCRYPTO_LIBS) $(AIRPCAP_LIBS) $(LIBAIRCRACK_LIBS) $(CRYPTO_LIBS)
 
+airtui_ng_SOURCES   = $(SRC_ATUI) $(airodump_ng_SOURCES)
+airtui_ng_CFLAGS  = $(COMMON_CFLAGS) $(LIBNL_CFLAGS) $(PCRE_CFLAGS) $(PCRE2_CFLAGS) -DAIRODUMP_NG_AS_LIB
+airtui_ng_CPPFLAGS  = $(AM_CPPFLAGS) -I$(abs_srcdir)/src/airodump-ng -I$(top_srcdir)/lib/osdep -I$(top_srcdir)/include \
+												$(NCURSES_CFLAGS) -I$(top_srcdir)/src/airodump-ng -DAIRODUMP_NG_AS_LIB
+airtui_ng_LDADD     = $(COMMON_LDADD) \
+                      $(LIBAIRCRACK_OSDEP_LIBS) \
+                      $(LIBACCRYPTO_LIBS) \
+                      $(LIBAIRCRACK_LIBS) \
+											$(NCURSES_LIBS) \
+										$(LIBAIRCRACK_CE_WEP_LIBS) \
+										$(PCRE_CFLAGS) $(PCRE2_CFLAGS) \
+										$(AIRPCAP_LIBS) \
+										$(CRYPTO_LIBS) \
+											-ltinfow -lpthread
+
+
+
 EXTRA_DIST +=	%D%/wpaclean/wpaclean.c \
 							%D%/buddy-ng/buddy-ng.c \
 							%D%/airdecloak-ng/airdecloak-ng.h \
@@ -231,4 +250,5 @@ EXTRA_DIST +=	%D%/wpaclean/wpaclean.c \
 							%D%/aircrack-ng/session.c \
 							%D%/aircrack-ng/session.h \
 							%D%/airodump-ng/dump_write.h \
-							%D%/airodump-ng/dump_write.c
+							%D%/airodump-ng/dump_write.c \
+							%D%/airtui-ng/airtui-ng.cpp
