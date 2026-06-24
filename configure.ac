@@ -38,9 +38,9 @@
 # program, then also delete it here.
 
 m4_pattern_allow([AC_VERSION])
-m4_define([version_date], "May 2022")
-m4_define([version_major], 1)
-m4_define([version_minor], 7)
+m4_define([version_date], "May 2026")
+m4_define([version_major], 0)
+m4_define([version_minor], 1)
 m4_define([version_micro], 0)
 m4_define([version_beta],  0)
 m4_define([version_rc],    0)
@@ -49,7 +49,7 @@ m4_define([version_triplet],version_major.version_minor.version_micro)
 m4_append([version_triplet],version_scm)
 
 AC_PREREQ([2.59])
-AC_INIT([aircrack-ng],[version_triplet],[https://github.com/aircrack-ng/aircrack-ng/discussions])
+AC_INIT([aircrack-ng],[version_triplet],[https://github.com/sc0dyx/aircrack-ng/discussions])
 
 #
 # Cross-Compilation
@@ -161,6 +161,18 @@ AX_LIB_SOCKET_NSL
 AC_CHECK_LIB([dl], [dlopen], [ LIBS="$LIBS -ldl" ], [:])
 AC_CHECK_LIB([m], [sin], [ LIBS="$LIBS -lm" ], [:])
 AIRCRACK_NG_COMPAT
+# -- ncurses
+AC_CHECK_LIB([tinfow], [keypad], [TINFO_LIBS="-ltinfow"], [
+    AC_CHECK_LIB([tinfo], [keypad], [TINFO_LIBS="-ltinfo"])
+])
+
+AC_CHECK_LIB([ncursesw], [initscr], [NCURSES_LIBS="-lncursesw $TINFO_LIBS"], [
+    AC_CHECK_LIB([ncurses], [initscr], [NCURSES_LIBS="-lncurses $TINFO_LIBS"], [
+        AC_MSG_ERROR([ncurses library not found (required for airtui-ng)])
+    ])
+])
+AC_SUBST([NCURSES_LIBS])
+# ---
 saved_cflags="$CFLAGS"
 CFLAGS=""
 AC_CHECK_FUNCS([posix_memalign aligned_alloc memalign __mingw_aligned_malloc _aligned_malloc], break)
